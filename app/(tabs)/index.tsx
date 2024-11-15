@@ -1,74 +1,197 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  FlatList,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+} from "react-native";
+import { useTasks } from "@/src/context/TaskContext"; // Add this import
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// interface Task {
+//   id: string;
+//   title: string;
+//   completed: boolean;
+// }
 
-export default function HomeScreen() {
+export default function TabOneScreen() {
+  const { tasks, toggleTask, addTask } = useTasks(); // Get tasks and toggleTask from our context
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newTask, setNewTask] = useState("");
+
+  const handleAddTask = () => {
+    if (newTask.trim()) {
+      addTask(newTask.trim());
+      setNewTask("");
+      setModalVisible(false);
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <Text style={styles.title}>TaskTracker</Text>
+
+      <FlatList
+        data={tasks}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={[
+              styles.task,
+              item.completed && styles.taskCompleted, // Add styling for completed tasks
+            ]}
+            onPress={() => toggleTask(item.id)}
+          >
+            <Text style={styles.taskText}>
+              {item.completed ? "✓ " : "○ "}
+              {item.title}
+            </Text>
+          </TouchableOpacity>
+        )}
+      />
+
+      {/* Add Task Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Add New Task</Text>
+            <TextInput
+              style={styles.input}
+              value={newTask}
+              onChangeText={setNewTask}
+              placeholder="Enter new task..."
+              autoFocus
+            />
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={handleAddTask}>
+                <Text style={styles.buttonText}>Add Task</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    padding: 20,
+    paddingTop: 60, // Add extra padding at the top
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 20,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  task: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  taskCompleted: {
+    backgroundColor: "#f8f8f8", // Light gray background for completed tasks
+  },
+  taskText: {
+    fontSize: 16,
+  },
+  fab: {
+    position: "absolute",
+    right: 150,
+    // top: 300,
+    bottom: 150,
+    backgroundColor: "#007AFF",
+    // padding: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  fabText: {
+    fontSize: 24,
+    color: "white",
+    fontWeight: "bold",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 20,
+    width: "80%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    fontSize: 16,
+  },
+  modalButtons: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  button: {
+    backgroundColor: "#007AFF",
+    padding: 10,
+    borderRadius: 8,
+    minWidth: 70,
+    alignItems: "center",
+    marginLeft: 10,
+  },
+  cancelButton: {
+    backgroundColor: "#f8f8f8",
+  },
+  buttonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  cancelButtonText: {
+    color: "#007AFF",
+    fontSize: 16,
+    fontWeight: "bold",
   },
 });
